@@ -1,7 +1,7 @@
 <template>
-  <div id="app">
+  <v-app id="app">
     <router-view />
-  </div>
+  </v-app>
 </template>
 
 <script>
@@ -28,7 +28,5 @@ html {
   text-align: center;
   color: #2c3e50;
   height: 100%;
-  background: url('./assets/trello-image2.png') no-repeat;
-  background-size: cover;
 }
 </style>
