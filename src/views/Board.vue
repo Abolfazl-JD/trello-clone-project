@@ -1,13 +1,19 @@
 <template>
   <div class="board">
-    <v-dialog v-model="alert.name" persistent max-width="600" v-if="alert.name">
+    <v-dialog
+      v-model="itemToDelete.name"
+      persistent
+      max-width="600"
+      v-if="itemToDelete.name"
+    >
       <v-card dark>
         <v-card-title>
           Are you sure you want to delete
-          <b class="mx-2">{{ alert.name }}</b> column ? </v-card-title
+          <b class="mx-2">{{ itemToDelete.name }}</b>
+          {{ itemToDelete.columnOrTask }} ? </v-card-title
         ><v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="green darken-1" text @click="alert.name = ''">
+          <v-btn color="green darken-1" text @click="itemToDelete.name = ''">
             cancel
           </v-btn>
           <v-btn color="red darken-1" text @click="confirmDeleting">
@@ -27,7 +33,7 @@
           <v-icon
             right
             class="pointer"
-            @click="deletedColumn(colIndex, col.name)"
+            @click="selectedItem(colIndex, col.name, null)"
             >mdi-delete</v-icon
           >
         </div>
@@ -60,6 +66,14 @@
                   {{ task.description }}
                 </v-list-item-subtitle>
               </v-list-item-content>
+              <v-list-item-icon class="item-icon">
+                <v-icon
+                  @click="selectedItem(colIndex, task.name, taskIndex)"
+                  color="primary"
+                  class="broom-font"
+                  >mdi-broom</v-icon
+                >
+              </v-list-item-icon>
             </v-list-item>
           </div>
         </div>
@@ -131,9 +145,11 @@ export default {
       name: '',
       description: '',
       newColumnName: '',
-      alert: {
+      itemToDelete: {
         colIndex: null,
         name: '',
+        columnOrTask: '',
+        taskIndex: null,
       },
     }
   },
@@ -146,18 +162,24 @@ export default {
         description: this.description,
       })
       dialog.value = false
+      this.name = ''
+      this.description = ''
     },
 
-    deletedColumn(colIndex, name) {
-      this.alert = {
+    selectedItem(colIndex, name, taskIndex) {
+      this.itemToDelete = {
         name,
         colIndex,
+        columnOrTask: taskIndex === null ? 'column' : 'task',
+        taskIndex,
       }
     },
 
     confirmDeleting() {
-      this.$store.commit('DELETE_COLUMN', this.alert.colIndex)
-      this.alert.name = ''
+      if (this.itemToDelete.columnOrTask === 'column') {
+        this.$store.commit('DELETE_COLUMN', this.itemToDelete.colIndex)
+      } else this.$store.commit('DELETE_TASK', this.itemToDelete)
+      this.itemToDelete.name = ''
     },
 
     addNewColumn() {
@@ -206,10 +228,20 @@ export default {
   padding: 0;
 }
 
-.alert {
+.itemToDelete {
   position: absolute;
   left: 50%;
   transform: translate(-50%, 0);
   z-index: 1000;
+}
+
+.broom-font {
+  font-size: 18px !important;
+  cursor: pointer;
+}
+
+.item-icon {
+  position: absolute;
+  right: 0;
 }
 </style>

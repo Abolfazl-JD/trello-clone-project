@@ -38,6 +38,13 @@ export default new Vuex.Store({
     CHANGE_TASK_DONE(state, { task, taskDoneValue }) {
       task.done = taskDoneValue
     },
+
+    DELETE_TASK(state, itemToDelete) {
+      state.board.columns[itemToDelete.colIndex].tasks.splice(
+        itemToDelete.taskIndex,
+        1
+      )[0]
+    },
   },
 
   actions: {},
