@@ -27,6 +27,11 @@
         v-for="(col, colIndex) in board.columns"
         :key="colIndex"
         class="column"
+        draggable
+        @dragover.prevent
+        @dragenter.prevent
+        @dragstart.self="pickupColumn($event, colIndex)"
+        @drop="moveTaskOrColumn($event, colIndex)"
       >
         <div class="mb-2 font-weight-bold d-flex justify-space-between">
           <span>{{ col.name }}</span>
@@ -40,6 +45,8 @@
         <div
           v-for="(task, taskIndex) of col.tasks"
           :key="taskIndex"
+          draggable
+          @dragstart="pickupTask($event, taskIndex, colIndex)"
           class="list-reset"
         >
           <div
@@ -192,6 +199,48 @@ export default {
         task,
         taskDoneValue: task.done,
       })
+    },
+
+    pickupColumn(e, fromColumnIndex) {
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.dropEffect = 'move'
+
+      e.dataTransfer.setData('from-column-index', fromColumnIndex)
+      e.dataTransfer.setData('type', 'moveColumn')
+    },
+
+    moveTaskOrColumn(e, toColumnIndex) {
+      const type = e.dataTransfer.getData('type')
+      if (type === 'moveTask') this.moveTask(e, toColumnIndex)
+      else this.moveColumn(e, toColumnIndex)
+    },
+
+    moveColumn(e, toColumnIndex) {
+      const fromColumnIndex = e.dataTransfer.getData('from-column-index')
+      this.$store.commit('MOVE_COLUMN', {
+        fromColumnIndex,
+        toColumnIndex,
+      })
+    },
+
+    moveTask(e, toColumnIndex) {
+      const fromColumnIndex = e.dataTransfer.getData('from-column-index')
+      const taskIndex = e.dataTransfer.getData('task-index')
+
+      this.$store.commit('MOVE_TASK', {
+        fromColumnIndex,
+        toColumnIndex,
+        taskIndex,
+      })
+    },
+
+    pickupTask(e, taskIndex, fromColumnIndex) {
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.dropEffect = 'move'
+
+      e.dataTransfer.setData('task-index', taskIndex)
+      e.dataTransfer.setData('from-column-index', fromColumnIndex)
+      e.dataTransfer.setData('type', 'moveTask')
     },
   },
 }
