@@ -11,9 +11,19 @@ export default new Vuex.Store({
   plugins: [saveStatePlugin],
   state: {
     board,
+    itemToDelete: {
+      colIndex: null,
+      name: '',
+      columnOrTask: '',
+      taskIndex: null,
+    },
   },
 
   mutations: {
+    SWITCH_ITEM_TO_DELETE(state, val) {
+      state.itemToDelete = val
+    },
+
     CREATE_NEW_TASK(state, { colIndex, name, description }) {
       state.board.columns[colIndex].tasks.push({
         description,
