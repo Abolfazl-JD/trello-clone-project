@@ -4,103 +4,30 @@
     draggable
     @dragover.prevent
     @dragenter.prevent
-    @dragstart.self="pickupColumn($event, colIndex)"
-    @drop="moveTaskOrColumn($event, colIndex)"
+    @dragstart.self="pickupColumn($event)"
+    @drop="moveTaskOrColumn($event)"
   >
     <div class="mb-2 font-weight-bold d-flex justify-space-between">
       <span>{{ col.name }}</span>
-      <v-icon
-        right
-        class="pointer"
-        @click="selectedItem(colIndex, col.name, null)"
+      <v-icon right class="pointer" @click="selectColumnToDelete"
         >mdi-delete</v-icon
       >
     </div>
-    <div
+    <TaskColumn
       v-for="(task, taskIndex) of col.tasks"
       :key="taskIndex"
-      draggable
-      @dragstart="pickupTask($event, taskIndex, colIndex)"
-      class="list-reset"
-    >
-      <div
-        class="rounded mb-2 white grey--text text--darken-2 font-weight-bold"
-      >
-        <v-list-item>
-          <v-list-item-action class="mr-4 mb-4">
-            <v-checkbox
-              @change="toggleTaskDone(task)"
-              color="primary"
-              v-model="task.done"
-            ></v-checkbox>
-          </v-list-item-action>
-
-          <v-list-item-content>
-            <v-list-item-title
-              :class="{
-                'text-decoration-line-through grey--text': task.done,
-              }"
-            >
-              {{ task.name }}
-            </v-list-item-title>
-            <v-list-item-subtitle class="font-italic caption">
-              {{ task.description }}
-            </v-list-item-subtitle>
-          </v-list-item-content>
-          <v-list-item-icon class="item-icon">
-            <v-icon
-              @click="selectedItem(colIndex, task.name, taskIndex)"
-              color="primary"
-              class="broom-font"
-              >mdi-broom</v-icon
-            >
-          </v-list-item-icon>
-        </v-list-item>
-      </div>
-    </div>
-
-    <v-dialog max-width="600">
-      <template v-slot:activator="{ on, attrs }">
-        <v-btn class="primary my-2" small v-bind="attrs" v-on="on">
-          <v-icon left>mdi-plus</v-icon>
-          New task
-        </v-btn>
-      </template>
-      <template v-slot:default="dialog">
-        <v-card>
-          <v-card-title class="text-center justify-center mb-7">
-            <h4>Create a new task</h4>
-          </v-card-title>
-          <v-card-text>
-            <v-text-field
-              outlined
-              v-model="name"
-              counter
-              label="Task to do"
-            ></v-text-field>
-            <v-textarea
-              label="Add description"
-              counter
-              v-model="description"
-              maxlength="35"
-              clearable
-              rows="4"
-              row-height="30"
-              outlined
-            ></v-textarea>
-          </v-card-text>
-          <v-card-actions class="justify-end">
-            <v-btn color="primary" @click="addNewTask(dialog, colIndex)"
-              >Submit</v-btn
-            >
-          </v-card-actions>
-        </v-card>
-      </template>
-    </v-dialog>
+      :task="task"
+      :taskIndex="taskIndex"
+      :colIndex="colIndex"
+    />
+    <NewTask :colIndex="colIndex" />
   </div>
 </template>
 
 <script>
+import TaskColumn from '@/components/TaskColumn.vue'
+import NewTask from '@/components/NewTask.vue'
+
 export default {
   props: {
     col: {
@@ -113,62 +40,33 @@ export default {
     },
   },
 
-  data() {
-    return {
-      name: '',
-      description: '',
-    }
+  components: {
+    TaskColumn,
+    NewTask,
   },
 
   methods: {
-    pickupColumn(e, fromColumnIndex) {
+    pickupColumn(e) {
       e.dataTransfer.effectAllowed = 'move'
       e.dataTransfer.dropEffect = 'move'
 
-      e.dataTransfer.setData('from-column-index', fromColumnIndex)
+      e.dataTransfer.setData('from-column-index', this.colIndex)
       e.dataTransfer.setData('type', 'moveColumn')
     },
 
-    moveTaskOrColumn(e, toColumnIndex) {
+    moveTaskOrColumn(e) {
       const type = e.dataTransfer.getData('type')
-      if (type === 'moveTask') this.moveTask(e, toColumnIndex)
-      else this.moveColumn(e, toColumnIndex)
+      if (type === 'moveTask') this.moveTask(e, this.colIndex)
+      else this.moveColumn(e, this.colIndex)
     },
 
-    selectedItem(colIndex, name, taskIndex) {
+    selectColumnToDelete() {
       this.$store.commit('SWITCH_ITEM_TO_DELETE', {
-        name,
-        colIndex,
-        columnOrTask: taskIndex === null ? 'column' : 'task',
-        taskIndex,
+        name: this.col.name,
+        colIndex: this.colIndex,
+        columnOrTask: 'column',
+        taskIndex: 0,
       })
-    },
-
-    pickupTask(e, taskIndex, fromColumnIndex) {
-      e.dataTransfer.effectAllowed = 'move'
-      e.dataTransfer.dropEffect = 'move'
-
-      e.dataTransfer.setData('task-index', taskIndex)
-      e.dataTransfer.setData('from-column-index', fromColumnIndex)
-      e.dataTransfer.setData('type', 'moveTask')
-    },
-
-    toggleTaskDone(task) {
-      this.$store.commit('CHANGE_TASK_DONE', {
-        task,
-        taskDoneValue: task.done,
-      })
-    },
-
-    addNewTask(dialog, colIndex) {
-      this.$store.commit('CREATE_NEW_TASK', {
-        colIndex,
-        name: this.name,
-        description: this.description,
-      })
-      dialog.value = false
-      this.name = ''
-      this.description = ''
     },
 
     moveColumn(e, toColumnIndex) {
@@ -192,15 +90,3 @@ export default {
   },
 }
 </script>
-
-<style scoped>
-.list-reset {
-  list-style: none;
-  padding: 0;
-}
-
-.broom-font {
-  font-size: 18px !important;
-  cursor: pointer;
-}
-</style>
